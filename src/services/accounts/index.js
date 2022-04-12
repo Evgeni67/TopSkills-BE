@@ -14,11 +14,77 @@ const accountSchema = require("./schema");
 
 accountRauter.post("/register", async (req, res, next) => {
   try {
-    const password = await cryptPassword(req.body.password);
+    const password = await cryptPassword(req.body.body.password);
     req.body["password"] = password;
-    const newAccount = new accountSchema(req.body);
+    const newAccount = new accountSchema(req.body.body);
     newAccount.save();
     res.send(newAccount._id);
+  } catch (error) {
+    3;
+    next(error);
+  }
+});
+
+accountRauter.put(
+  "/addToFavourites/:movieId",
+  authorize,
+  async (req, res, next) => {
+    try {
+      console.log(req?.user?.favourites);
+
+      if (req?.user?.favourites.includes(req.params.movieId)) {
+        const filteredMovieIds = req?.user?.favourites.filter(
+          (id) => id !== req.params.movieId
+        );
+        console.log(filteredMovieIds);
+        await accountSchema.findByIdAndUpdate(
+          mongoose.Types.ObjectId(req.user._id),
+          {
+            favourites: filteredMovieIds,
+          }
+        );
+        res.send("Removed");
+      } else {
+        await accountSchema.findByIdAndUpdate(
+          mongoose.Types.ObjectId(req.user._id),
+          {
+            $push: { favourites: req.params.movieId },
+          }
+        );
+        res.send("Added");
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+accountRauter.put("/addNote/:movieId", authorize, async (req, res, next) => {
+  try {
+    await accountSchema.findByIdAndUpdate(
+      mongoose.Types.ObjectId(req.user._id),
+      {
+        $push: { notes: req.body.body },
+      }
+    );
+    res.send("Note added");
+  } catch (error) {
+    next(error);
+  }
+});
+accountRauter.put("/deleteNote", authorize, async (req, res, next) => {
+  try {
+    console.log(req.body.body.note);
+    const filteredNotes = req.user.notes.filter(
+      (note) => note.note !== req.body.body.note
+    );
+    console.log(filteredNotes);
+    await accountSchema.findByIdAndUpdate(
+      mongoose.Types.ObjectId(req.user._id),
+      {
+        notes: filteredNotes,
+      }
+    );
+    res.send("Note added");
   } catch (error) {
     next(error);
   }

@@ -15,6 +15,11 @@ const AccountSchema = new Schema(
       required: false,
       default: [],
     },
+    notes: {
+      type: Array,
+      required: false,
+      default: [],
+    },
     tokens: [
       {
         token: {
